@@ -1,0 +1,63 @@
+#!/usr/bin/python3
+
+import argparse
+import json
+import sqlite3
+
+from lib.cli import bold
+from lib.cli import bright_red
+from lib.cli import bright_green
+from lib.cli import validate_path
+
+from lib import scanner
+
+def export(servers, format, path):
+    with open(path, 'w') as f:
+        if format == 'text':
+            for server in servers:
+                print('Name: ' + server['name'], file = f)
+                print('Host: ' + server['host'], file = f)
+                print('Port: ' + str(server['port']), file = f)
+                print('Username: ' + server['username'], file = f)
+                print('Password: ' + server['password'], file = f)
+                print('-----------------------------------', file = f)
+        else:
+            f.write(json.dumps(servers))
+
+def main():
+    parser = argparse.ArgumentParser(
+        description = 'A tool for recovering server credentials from a pgadmin4 database'
+    )
+
+    parser.add_argument('path', action='store', help='Path to the database (typically named pgadmin4.db)')
+    parser.add_argument('-f', action='store', choices=['text', 'json'], help='The output format for the -o option (default: text)', default='text')
+    parser.add_argument('-o', metavar='PATH', action='store', help='Path to a file to save the credentials in')
+    args = parser.parse_args()
+
+    if not validate_path(args.path):
+        exit(1)
+
+    db = sqlite3.connect(args.path)
+    servers = scanner.read_and_decrypt_servers(db)
+
+    if len(servers) == 0:
+        print(bright_red('Failed: could not decrypt any server credentials'))
+        exit(0)
+
+    print('\nDecrypted {c} sets of credentials\n'.format(c = len(servers)))
+
+    for server in servers:
+        print(bold('Name: ') + server['name'])
+        print(bold('Host: ') + server['host'])
+        print(bold('Port: ') + str(server['port']))
+        print(bold('Username: ') + server['username'])
+        print(bold('Password: ') + bright_green(server['password']))
+        print('-----------------------------------')
+
+    print('')
+
+    if not args.o is None:
+        export(servers, args.f, args.o)
+
+if __name__  == '__main__':
+    main()
