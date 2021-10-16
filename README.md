@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://static.rastating.com/images/pga4decrypt.png">
+  <img src="68747470733a2f2f7374617469632e726173746174696e672e636f6d2f696d616765732f70676134646563727970742e706e67.png">
 </p>
 
 What is pga4decrypt?
